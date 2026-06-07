@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban Workflow Board</title>
+  <style>
+    body { font-family: sans-serif;
+         background-color: #f3f4f6; 
+         margin: 0; 
+         padding: 20px; }
+    .kanban-header {
+         max-width: 1000px;
+          margin: 0 auto 20px auto;
+           display: flex; 
+           justify-content: space-between; 
+           align-items: center; 
+        }
+    .add-task-btn { 
+        background: #2563eb; 
+        color: white;
+         border: none; 
+         padding: 10px 20px;
+          border-radius: 6px;
+           cursor: pointer; 
+           font-size: 1rem; }
+    .board-container {
+         display: grid;
+          grid-template-columns: repeat(2, 1fr);
+           gap: 20px; 
+           max-width: 600px; 
+           margin: 0 auto; 
+        }
+    .column-track {
+         background: #e5e7eb;
+          border-radius: 8px; 
+          padding: 15px;
+           min-height: 300px; 
+           display: flex;
+            flex-direction: column;}
+    .column-title { 
+        font-size: 1.2rem; 
+        font-weight: bold;
+         margin-bottom: 15px; 
+         border-bottom: 2px solid #d1d5db; 
+         padding-bottom: 5px;
+         }
+    .task-card { 
+        background: white; 
+        padding: 15px;
+         border-radius: 6px; 
+         margin-bottom: 12px; 
+         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          cursor: grab; 
+          position: relative; 
+        }
+    .task-card:active {
+         cursor: grabbing; 
+        }
+    .task-card h4 {
+         margin: 0 0 8px 0; font-size: 1.1rem; }
+    .task-card p { margin: 0 0 10px 0;
+         font-size: 0.9rem; 
+         color: #4b5563; 
+        }
+    .badge { 
+        display: inline-block; 
+        padding: 4px 8px;
+         border-radius: 4px;
+          font-size: 0.75rem; 
+          font-weight: bold; 
+          text-transform: uppercase; 
+        }
+    .priority-high { 
+        background: #fee2e2; 
+        color: #ef4444;
+     }
+    .priority-medium { 
+        background: #fef3c7;
+         color: #d97706; 
+        }
+    .priority-low { 
+        background: #dcfce7; 
+        color: #16a34a;
+     }
+    .delete-card-btn { 
+        position: absolute; 
+        top: 10px; 
+        right: 10px; 
+        background: none;
+         border: none; 
+         color: #9ca3af; 
+         cursor: pointer;
+          font-size: 1.1rem; 
+        }
+    .delete-card-btn:hover { 
+        color: #ef4444; 
+    }
+    .checkmark {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #16a34a;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    .drag-over {
+         background: #d1d5db; 
+         border: 2px dashed #9ca3af; 
+        }
+    .modal { 
+        position: fixed; 
+        top: 0;
+         left: 0; 
+         width: 100%; 
+         height: 100%; 
+         background: rgba(0,0,0,0.4); 
+         display: flex; 
+         justify-content: center; 
+         align-items: center; 
+        }
+    .modal-content {
+         background: white;
+          padding: 30px; 
+          border-radius: 8px; 
+          width: 400px; 
+          box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+        }
+    .modal-content label {
+         display: block;
+          margin-bottom: 5px; 
+          font-weight: bold;
+           font-size: 0.9rem;
+         }
+    .modal-content input, .modal-content textarea, .modal-content select { width: 100%;
+         padding: 8px; 
+         margin-bottom: 15px;
+          border: 1px solid #ccc; 
+          border-radius: 4px; 
+          box-sizing: border-box;
+         }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .hidden { display: none; }
+    .cancel-btn { background: #e5e7eb; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .save-btn { background: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <header class="kanban-header">
+    <h1>Project Sprint Workspace</h1>
+    <button id="add-task-btn" class="add-task-btn">Add New Task</button>
+  </header>
+
+  <main class="board-container">
+    <section class="column-track" data-status="todo" id="col-todo">
+      <div class="column-title">To Do</div>
+      <div class="cards-drop-zone" id="zone-todo"></div>
+    </section>
+    <section class="column-track" data-status="inprogress" id="col-inprogress">
+      <div class="column-title">In Progress</div>
+      <div class="cards-drop-zone" id="zone-inprogress"></div>
+    </section>
+  </main>
+
+  <div id="task-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="modal-heading">Create Workflow Task</h3>
+      <label for="task-title">Title</label>
+      <input type="text" id="task-title" required>
+      
+      <label for="task-desc">Description</label>
+      <textarea id="task-desc" rows="3" required></textarea>
+      
+      <label for="task-priority">Priority Level</label>
+      <select id="task-priority">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+      
+      <div class="modal-actions">
+        <button id="modal-cancel" class="cancel-btn">Cancel</button>
+        <button id="modal-save" class="save-btn">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let kanbanStateDataset = JSON.parse(localStorage.getItem("KANBAN_TASKS_POOL")) ?? [
+      { id: "101", title: "Setup Project Repository", desc: "Initialize primary branches and write a baseline README file.", priority: "high", status: "todo" },
+      { id: "102", title: "Review Form Component Accessibility", desc: "Audit visual keyboard indicators across inputs.", priority: "medium", status: "inprogress" }
+    ];
+
+    const zoneTodo = document.getElementById("zone-todo");
+    const zoneInProgress = document.getElementById("zone-inprogress");
+    const addTaskBtn = document.getElementById("add-task-btn");
+    const taskModal = document.getElementById("task-modal");
+    const modalCancel = document.getElementById("modal-cancel");
+    const modalSave = document.getElementById("modal-save");
+
+    const inputTitle = document.getElementById("task-title");
+    const inputDesc = document.getElementById("task-desc");
+    const inputPriority = document.getElementById("task-priority");
+
+    const syncKanbanStorage = () => {
+      localStorage.setItem("KANBAN_TASKS_POOL", JSON.stringify(kanbanStateDataset));
+    };
+
+    const buildBoardCards = () => {
+      zoneTodo.innerHTML = "";
+      zoneInProgress.innerHTML = "";
+
+      kanbanStateDataset.forEach(task => {
+        const card = document.createElement("div");
+        card.className = "task-card";
+        card.draggable = true;
+        card.dataset.id = task.id;
+        
+        const checkmark = task.status === "inprogress" ? '<span class="checkmark">✓</span>' : '';
+        
+        card.innerHTML = `
+          <button class="delete-card-btn" aria-label="Delete task">&times;</button>
+          ${checkmark}
+          <h4>${task.title}</h4>
+          <p>${task.desc}</p>
+          <span class="badge priority-${task.priority}">${task.priority}</span>
+        `;
+
+        card.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", task.id);
+        });
+
+        if (task.status === "todo") zoneTodo.appendChild(card);
+        if (task.status === "inprogress") zoneInProgress.appendChild(card);
+      });
+    };
+
+    addTaskBtn.addEventListener("click", () => {
+      taskModal.classList.remove("hidden");
+    });
+
+    modalCancel.addEventListener("click", () => {
+      taskModal.classList.add("hidden");
+      inputTitle.value = "";
+      inputDesc.value = "";
+    });
+
+    modalSave.addEventListener("click", () => {
+      if (!inputTitle.value.trim() || !inputDesc.value.trim()) return;
+
+      const newTask = {
+        id: Date.now().toString(),
+        title: inputTitle.value.trim(),
+        desc: inputDesc.value.trim(),
+        priority: inputPriority.value,
+        status: "todo"
+      };
+
+      kanbanStateDataset.push(newTask);
+      syncKanbanStorage();
+      buildBoardCards();
+      modalCancel.click();
+    });
+
+    document.querySelectorAll(".column-track").forEach(track => {
+      track.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        track.classList.add("drag-over");
+      });
+
+      track.addEventListener("dragleave", () => {
+        track.classList.remove("drag-over");
+      });
+
+      track.addEventListener("drop", (e) => {
+        e.preventDefault();
+        track.classList.remove("drag-over");
+        const draggedTaskId = e.dataTransfer.getData("text/plain");
+        const nextStatus = track.dataset.status;
+
+        const targetTask = kanbanStateDataset.find(task => task.id === draggedTaskId);
+        if (targetTask) {
+          targetTask.status = nextStatus;
+          syncKanbanStorage();
+          buildBoardCards();
+        }
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("delete-card-btn")) {
+        const idToPurge = e.target.closest(".task-card").dataset.id;
+        kanbanStateDataset = kanbanStateDataset.filter(task => task.id !== idToPurge);
+        syncKanbanStorage();
+        buildBoardCards();
+      }
+    });
+
+    buildBoardCards();
+  </script>
+</body>
+</html>

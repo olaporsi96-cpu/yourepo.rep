@@ -1,0 +1,7 @@
+# Class 14 DOM Manipulation & Events ##
+**Event Flow Mechanics:** Bubbling vs. Capturing
+Event Capturing (Trickling): The initial execution phase where an event travels downward from the top window layer, passing through parent elements until it reaches the target element that triggered the action.
+**Event Bubbling:** The default secondary phase where the event reverses direction. It executes on the target element first, then travels upward through parent elements like an underwater air bubble.Event Delegation Architecture
+Instead of attaching 1,000 separate click event listeners to individual rows in a massive list component, you attach a single event listener to the parent element wrapper. When an item is clicked, the action bubbles up to the parent container, which catches it, inspects event.target, and updates the matching element safely. This saves memory and keeps your application fast.
+XSS Injection Vectors via innerHTML Using innerHTML to inject unverified text strings straight into elements forces the browser to evaluate that string as executable code. If a user inputs a malicious script tag, the browser will run it, creating a dangerous cross-site scripting (XSS) security vulnerability.
+**The Solution:** Use textContent or document.createElement(). These treat user inputs strictly as safe text strings rather than executable code, keeping your application secure.

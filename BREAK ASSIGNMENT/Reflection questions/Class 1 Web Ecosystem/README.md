@@ -41,10 +41,46 @@ I disagree with the approach of using general containers uniformly across a layo
 **Code Maintainability:** A codebase filled with nested <div> structures results in complex layouts that are difficult to scan. It forces reliance on overly specific class configurations or long, fragile CSS selector chains to apply styles.
 
 **Developer Collaboration:** Engineering groups function best when code layouts are immediately clear. Using specific, standard elements like <section>, <header>, and <footer> establishes an explicit, self-documenting code architecture that helps teams quickly understand and maintain the layout.
-## The Difference Between <em> and <i> ##
+## Class 02 Typography & Information Hierarchy ##
+**The Difference Between <em> and <i>**
 **<em> (Emphasis):** Structural element indicating semantic emphasis. It changes the meaning of the sentence itself. Screen readers alter their verbal inflection, pitch, and speed when processing this tag.
 
 **<i> (Idiomatic Text):** Presentational element denoting text set off from normal speech for contextual reasons (such as technical terms, foreign phrases, or thoughts) without adding extra semantic importance. Screen readers read this text with standard inflection.
 Semantic Emphasis: "You must <em>submit</em> the Assignment before 8:30pm." (Emphasizes urgency).
 
 Idiomatic Typographic Shift: "The term hoisting in JavaScript refers to variable initialization mechanics." (Highlights a technical term).
+**Screen Reader Element Treatment**
+<h1> through <h6>: Assistive software compiles these headings into an interactive index map. Users can press quick shortcut keys (like H on the NVDA screen reader) to skip directly across primary sections without reading intermediate paragraph text.
+
+<ul> / <ol>: When hitting a list block, the browser reads out the total item count (e.g., "List, 5 items"). This contextual warning helps visually impaired users understand the size of the navigation group or data set ahead.
+
+<a> (with href): Screen readers register these explicitly as actionable linkages, announcing "Link, [Anchor Text]". If the page lacks an explicit href attribute, the element loses its interactive access state in the browser's accessibility tree.
+
+**ARIA Labels: Safe Application vs. Bad Markup**
+ARIA attributes should enhance accessibility when native HTML tags fall short, not mask structurally deficient code.
+
+Correct Use Case (Enhancing Interactive Controls)
+Using an icon button without visible text requires an explicit descriptor so screen readers can interpret its action:
+
+HTML
+<button type="button" aria-label="Close modal window">
+  <svg>...</svg>
+</button>
+Incorrect Use Case (Masking Structural Deficiencies)
+Using an un-focusable container engineered to handle click events via JavaScript is an anti-pattern:
+
+HTML
+<div class="submit-box" aria-label="Submit form entry">Send Data</div>
+
+<button type="submit">Send Data</button>
+Accessibility Reflection
+I conducted an accessibility audit on a website created by one of my friend in school he's just learning tho the landing page, observing the following structural details:Keyboard Traps & Tab Navigation: The primary navigation menu could be stepped through via the Tab key, but once inside the embedded calendar widget, the focus state became trapped inside an infinite loop, preventing keyboard-only users from reaching subsequent form fields.
+
+Visual Focus Indicators: The global site links utilized custom reset styles (outline: none) without declaring a matching fallback visual indicator (:focus-visible). As a result, the active keyboard cursor location became entirely invisible when stepping through top-level links.
+Form Field Labels: The search input box relied entirely on a visual placeholder="Search items..." descriptor without an associated <label> element. When an automated accessibility tool audited the element, it flagged a critical error: screen readers read this as an unlabelled input field, leaving users without context on what to type once the placeholder text disappears.
+**Product Thinking**
+Information Hierarchy Design for an API Reference Manual
+To help developers quickly scan documentation, the interface uses a structured heading hierarchy that maps directly to their workflow:<h1> Project Integration Engine API (Global identity boundary)
+<h2> Authentication Protocols (Core operational phase)
+<h3> JSON Web Token Delivery (Implementation method)
+<h3> OAuth2 Access Key Validation (Implementation method)<h2> Endpoints Resource Index (Core operational phase) <h3> POST /v1/users/register (Actionable target route) <h3> GET /v1/users/profile (Actionable target route)

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cinema Catalog Engine</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background-color: #0f172a; color: #f8fafc; padding: 20px; }
+    .search-panel { max-width: 800px; margin: 0 auto 30px auto; text-align: center; }
+    .search-input { width: 70%; padding: 12px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: white; font-size: 1rem; }
+    .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px; max-width: 1000px; margin: 0 auto; }
+    .movie-card { background: #1e293b; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.2s; cursor: pointer; }
+    .movie-card:hover { transform: scale(1.03); }
+    .movie-poster { width: 100%; height: 280px; object-fit: cover; background-color: #334155; }
+    .movie-info { padding: 15px; }
+    .movie-info h4 { margin: 0 0 8px 0; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta-year { font-size: 0.85rem; color: #94a3b8; }
+    .alert { text-align: center; font-size: 1.2rem; color: #94a3b8; margin-top: 40px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <main class="search-panel">
+    <h1>Cinema Database Explorer</h1>
+    <input type="text" id="movie-search-field" class="search-input" placeholder="Type movie titles here to search...">
+    <div id="status-feedback" class="alert hidden">Loading catalog data...</div>
+  </main>
+
+  <section id="catalog-display-node" class="catalog-grid"></section>
+
+  <script>
+    const searchField = document.getElementById("movie-search-field");
+    const statusFeedback = document.getElementById("status-feedback");
+    const catalogDisplayNode = document.getElementById("catalog-display-node");
+
+    // Live production mock engine fallback to simulate API data responses without API key roadblocks
+    const simulateMovieAPIFetch = async (queryTerm) => {
+      await new Promise(resolve => setTimeout(resolve, 400)); // Simulate realistic network response delay
+      
+      const mockMoviesDataset = [
+        { Title: "Inception Odyssey", Year: "2010", Poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400" },
+        { Title: "Interstellar Horizons", Year: "2014", Poster: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400" },
+        { Title: "The Dark Knight Sentinel", Year: "2008", Poster: "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=400" },
+        { Title: "The Matrix Paradigm", Year: "1999", Poster: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400" }
+      ];
+
+      return mockMoviesDataset.filter(movie => 
+        movie.Title.toLowerCase().includes(queryTerm.toLowerCase())
+      );
+    };
+
+    const runCatalogLookupPipeline = async () => {
+      const sanitizedQuery = searchField.value.trim();
+      if (sanitizedQuery.length < 2) {
+        catalogDisplayNode.innerHTML = "";
+        statusFeedback.classList.add("hidden");
+        return;
+      }
+
+      statusFeedback.textContent = "Loading film entries...";
+      statusFeedback.classList.remove("hidden");
+      catalogDisplayNode.innerHTML = "";
+
+      try {
+        const resultsList = await simulateMovieAPIFetch(sanitizedQuery);
+        statusFeedback.classList.add("hidden");
+
+        if (resultsList.length === 0) {
+          statusFeedback.textContent = "No cinema records matched your search query.";
+          statusFeedback.classList.remove("hidden");
+          return;
+        }
+
+        resultsList.forEach(movie => {
+          const card = document.createElement("div");
+          card.className = "movie-card";
+          card.innerHTML = `
+            <img class="movie-poster" src="${movie.Poster}" alt="${movie.Title} poster graphic">
+            <div class="movie-info">
+              <h4>${movie.Title}</h4>
+              <span class="meta-year">Release Year: ${movie.Year}</span>
+            </div>
+          `;
+          catalogDisplayNode.appendChild(card);
+        });
+
+      } catch (err) {
+        statusFeedback.textContent = "Error communicating with search servers.";
+        statusFeedback.classList.remove("hidden");
+      }
+    };
+
+    // Debounce Controller Engine: Prevents hitting endpoints repeatedly while typing
+    let typingTimerReference = null;
+    searchField.addEventListener("input", () => {
+      clearTimeout(typingTimerReference);
+      typingTimerReference = setTimeout(runCatalogLookupPipeline, 500);
+    });
+  </script>
+</body>
+</html>
